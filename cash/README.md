@@ -117,16 +117,24 @@ To install the libraries, we need to install them thanks to npm like (be careful
 `chalk` is a library for terminal string styling done right.   
 `ora` is a library for an elegant terminal spinner.   
 
-We then require the `currencies.json` file and the const `API` created in the `constants.js` file that we have exported.
+Then we require the `currencies.json` file and the const `API` created in the `constants.js` file that we have exported.   
 
 ```sh
 const cash = async command => {
 	const {amount} = command;
 	const from = command.from.toUpperCase();
 	const to = command.to.filter(item => item !== from).map(item => item.toUpperCase());
+
+  // ...
+
+};
 ```
+To define `from` and `to` for the conversion from a certain currency to an other.
 
 ```sh
+const cash = async command => {
+  // ...
+
 	console.log();
 	const loading = ora({
 		text: 'Converting...',
@@ -138,9 +146,17 @@ const cash = async command => {
 	});
 
 	loading.start();
+
+  // ...
+
+};
 ```
+To design the execution of the program, with the price in green and a spinner to get animation.
 
 ```sh
+const cash = async command => {
+  // ...
+
 	await got(API, {json: true}).then(response => {
 		money.base = response.body.base;
 		money.rates = response.body.rates;
@@ -163,10 +179,70 @@ const cash = async command => {
 		}
 		process.exit(1);
 	});
-
+};
 ```
+The got method is used to get from the API the information we are interested in. The forEach loop is converting the `money.base` currency
+fixing the `money.rates` to 3 decimals.
 
-To be able to use those constants in an other file (meaning here in `cash.js`), we export them.
+To be able to use those constants in an other file (meaning here in `index.js`), we export them.
 
 
 ### 🏃‍♀️ index.js
+In your `bin` folder, create a new file named `index.js`.   
+The very first step is to import the libraries we will have to use for the function to implement.
+
+```sh
+'use strict';
+
+const Conf = require('conf');
+const meow = require('meow');
+const chalk = require('chalk');
+const cash = require('./cash.js');
+
+const config = new Conf();
+const argv = process.argv.slice(2);
+
+const {DEFAULT_TO_CURRENCIES} = require('./constants');
+```
+
+To install the libraries, we need to install them thanks to npm like (be careful to be in the right path of your project) :
+
+```sh
+❯ npm install conf meow
+```
+
+`conf` is a human-friendly and powerful HTTP request library.   
+`meow` is a library for realtime currency conversion and exchange rate calculation, from any currency, to any currency.   
+We already install chalk so we do not need to install it a second time.   
+
+Then we require `cash.js` because it corresponds to our conversion program. An we also need `DEFAULT_TO_CURRENCIES` from `constants.js`.   
+
+```sh
+const cli = meow(`
+	Usage
+		$ cash <amount> <from> <to>
+		$ cash <options>
+	Options
+		--set -s 			Set default currencies
+	Examples
+		$ cash 10 usd eur pln
+		$ cash --set usd aud
+`);
+
+if (argv.indexOf('--save') !== -1 || argv.indexOf('-s') !== -1) {
+	config.set('defaultFrom', argv[1] || config.get('defaultFrom', 'USD'));
+	config.set('defaultTo', (argv.length > 2) ? process.argv.slice(4) : config.get('defaultTo', DEFAULT_TO_CURRENCIES));
+	console.log(chalk.green('Saved default currencies to ' + config.path));
+	process.exit(0);
+}
+
+const command = {
+	amount: parseFloat(argv[0]) || 1,
+	from: argv[1] || config.get('defaultFrom', 'USD'),
+	to: (argv.length > 2) ? process.argv.slice(4) : config.get('defaultTo', DEFAULT_TO_CURRENCIES)
+};
+
+cash(command);
+```
+This code is about defining what currency we want to convert and know more about the exchange rate.   
+Then we execute `command` using `cash` which is the reference to the function written in `cash.js`.
