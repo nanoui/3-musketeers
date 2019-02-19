@@ -147,22 +147,23 @@ const cash = async command => {
 
 		to.forEach(item => {
 			if (currencies[item]) {
-				loading.succeed('${chalk.green(money.convert(amount, {from, to: item}).toFixed(3))} ${'(${item})'} ${currencies[item]}'); //use backquote instead of single quote
+				loading.succeed(`${chalk.green(money.convert(amount, {from, to: item}).toFixed(3))} ${`(${item})`} ${currencies[item]}`);
 			} else {
-				loading.warn('${chalk.yellow('The "${item}" currency not found ')}'); //use backquote instead of single quote
+				loading.warn(`${chalk.yellow(`The "${item}" currency not found `)}`);
 			}
 		});
 
-		console.log(chalk.underline.gray('\nConversion of ${chalk.bold(from)} ${chalk.bold(amount)}')); //use backquote instead of single quote
+		console.log(chalk.underline.gray(`\nConversion of ${chalk.bold(from)} ${chalk.bold(amount)}`));
 
 	}).catch(error => {
 		if (error.code === 'ENOTFOUND') {
 			loading.fail(chalk.red('Please check your internet connection!\n'));
 		} else {
-			loading.fail(chalk.red('Internal server error :(\n${error}')); //use backquote instead of single quote
+			loading.fail(chalk.red('Internal server error :(\n${error}'));
 		}
 		process.exit(1);
 	});
+
 ```
 
 To be able to use those constants in an other file (meaning here in `cash.js`), we export them.
