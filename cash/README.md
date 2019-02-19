@@ -10,9 +10,9 @@
 
 - [🐣 Introduction](#-introduction)
 - [📁 The different files](#-the-different-files)
-  - constants.js
-  - cash.js
-  - index.js
+  - 🏃‍♀️ constants.js
+  - 🏃‍♀️ cash.js
+  - 🏃‍♀️ index.js
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -71,7 +71,7 @@ Then check in the `package.json` created that it looks like this :
 We can now begin to code the currency conversion program.
 
 
-### constants.js
+### 🏃‍♀️ constants.js
 In your `bin` folder, create a new file named `constants.js`.
 
 ```sh
@@ -90,7 +90,7 @@ Then, in `DEFAULT_TO_CURRENCIES` we stock the currencies we are interesting in.
 To be able to use those constants in an other file (meaning here in `cash.js`), we export them.
 
 
-### cash.js
+### 🏃‍♀️ cash.js
 In your `bin` folder, create a new file named `cash.js`.   
 The very first step is to import the libraries we will have to use for the function to implement.
 
@@ -106,5 +106,66 @@ const currencies = require('../lib/currencies.json');
 const {API} = require('./constants');
 ```
 
+To install the libraries, we need to install them thanks to npm like (be careful to be in the right path of your project) :
 
-### index.js
+```sh
+❯ npm install got money chalk ora
+```
+
+`got` is a human-friendly and powerful HTTP request library.   
+`money` is a library for realtime currency conversion and exchange rate calculation, from any currency, to any currency.   
+`chalk` is a library for terminal string styling done right.   
+`ora` is a library for an elegant terminal spinner.   
+
+We then require the `currencies.json` file and the const `API` created in the `constants.js` file that we have exported.
+
+```sh
+const cash = async command => {
+	const {amount} = command;
+	const from = command.from.toUpperCase();
+	const to = command.to.filter(item => item !== from).map(item => item.toUpperCase());
+```
+
+```sh
+	console.log();
+	const loading = ora({
+		text: 'Converting...',
+		color: 'green',
+		spinner: {
+			interval: 150,
+			frames: to
+		}
+	});
+
+	loading.start();
+```
+
+```sh
+	await got(API, {json: true}).then(response => {
+		money.base = response.body.base;
+		money.rates = response.body.rates;
+
+		to.forEach(item => {
+			if (currencies[item]) {
+				loading.succeed('${chalk.green(money.convert(amount, {from, to: item}).toFixed(3))} ${'(${item})'} ${currencies[item]}'); //use backquote instead of single quote
+			} else {
+				loading.warn('${chalk.yellow('The "${item}" currency not found ')}'); //use backquote instead of single quote
+			}
+		});
+
+		console.log(chalk.underline.gray('\nConversion of ${chalk.bold(from)} ${chalk.bold(amount)}')); //use backquote instead of single quote
+
+	}).catch(error => {
+		if (error.code === 'ENOTFOUND') {
+			loading.fail(chalk.red('Please check your internet connection!\n'));
+		} else {
+			loading.fail(chalk.red('Internal server error :(\n${error}')); //use backquote instead of single quote
+		}
+		process.exit(1);
+	});
+```
+
+To be able to use those constants in an other file (meaning here in `cash.js`), we export them.
+
+
+### 🏃‍♀️ index.js
